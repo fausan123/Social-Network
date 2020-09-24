@@ -1,0 +1,120 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+<div class="overflow-hidden">
+    <div class="m-2 float-left">
+        <img id="image-profile" src="{{ profile.image.url }}">
+    </div>
+    <div class="m-4 float-left">
+        <h1 id="profile-username"><strong>{{ profile.username }}</strong></h1>
+        <h3>{{ profile.email }}</h3>
+        <div class="overflow-hidden">
+            <div class="profile-infos">{{ profile.posts.all|length }}<br><strong>Posts</strong></div>
+            <div class="profile-infos"><span
+                    id="follower-count">{{ profile.followers.all|length }}</span><br><strong>Followers</strong>
+            </div>
+            <div class="profile-infos">{{ profile.following.all|length }}<br><strong>Following</strong></div>
+        </div>
+        {% if user.is_authenticated %}
+
+        {% if user == profile %}
+        <p class="mb-0"><strong>Update Profile Picture:</strong></p>
+        <form action="{% url 'profile' user.id %}" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input id="file-upload" type="file" name="image" />
+            <input type="submit" value="Upload" class="btn btn-info">
+        </form>
+        {% else %}
+
+        {% if following_user %}
+        <button class="btn btn-danger" id="follow" data-userid="{{ profile.id }}"
+            data-status="following">Unfollow</button>
+        {% else %}
+        <button class="btn btn-info" id="follow" data-userid="{{ profile.id }}"
+            data-status="notfollowing">Follow</button>
+        {% endif %}
+
+        {% endif %}
+
+        {% endif %}
+    </div>
+    <div class="m-5 float-left">
+        <h4>Bio:</h4>
+        <p id="bio-content">{{ profile.bio }}</p>
+        <div class="bio-info"></div>
+        {% if user.is_authenticated %}
+        {% if user == profile %}
+        {% if profile.bio == "" %}
+        <button class="btn btn-info" id="bio" data-userid="{{ user.id }}">Add Bio</button>
+        {% else %}
+        <button class="btn btn-info" id="bio" data-userid="{{ user.id }}">Update Bio</button>
+        {% endif %}
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<div>
+    <hr>
+    <h2 class="ml-2 mu-2">All Posts:</h2>
+    {% for post in page_obj %}
+    <div class="border-post m-2 p-2">
+        <p class="post-username"><img class="profile-pic" src="{{ post.user.image.url }}"> <strong><a
+                    href="{% url 'profile' post.user.id %}">{{ post.user.username }}</a></strong>
+            {% if user == post.user %}
+            <button class="btn btn-primary btn-sm edit-btn" data-postid="{{ post.id }}">Edit</button>
+            {% endif %}
+            <span class="float-right text-muted">{{ post.date }}</span>
+        </p>
+        <hr>
+        <div id="{{ post.id }}post-content" class="post-content">
+            <p>{{ post.content }}</p>
+        </div>
+        <p class="like">
+            {% if user.is_authenticated %}
+
+            {% if user in post.post_likes.all %}
+            <button data-postid="{{ post.id }}" data-status="liked"><img src="/media/like_red.png"
+                    id="{{ post.id }}-img"></button>
+            {% else %}
+            <button data-postid="{{ post.id }}" data-status="unliked"><img src="/media/like.png"
+                    id="{{ post.id }}-img"></button>
+            {% endif %}
+
+            {% else %}
+            <img src="/media/like.png" id="{{ post.id }}-img">
+
+            {% endif %}
+
+            <span id="{{ post.id }}-count">{{ post.likes.all|length }}</span>
+
+            {% if post.edited %}
+            <span class="text-muted" id="{{ post.id }}edit-status"><strong>&nbsp&nbsp&nbspEDITED</strong></span>
+            {% else %}
+            <span class="text-muted" id="{{ post.id }}edit-status"><strong></strong></span>
+            {% endif %}
+        </p>
+    </div>
+    {% endfor %}
+</div>
+
+{% if is_paginated %}
+<div class="p-2 pager">
+    {% if page_obj.has_previous %}
+    <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+
+    <a class="btn btn-info mb-4" href="?page={{ page_obj.number }}">{{ page_obj.number }}</a>
+
+    {% if page_obj.has_next %}
+    <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.next_page_number }}">Next</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block script %}
+<script src="{% static 'network/profile.js' %}"></script>
+{% endblock %}

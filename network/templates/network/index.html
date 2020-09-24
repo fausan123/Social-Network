@@ -1,0 +1,69 @@
+{% extends "network/layout.html" %}
+{% load crispy_forms_tags %}
+
+{% block body %}
+{% if user.is_authenticated %}
+<div class="border m-2 p-2">
+    <form action="{% url 'index' %}" method="post">
+        {% csrf_token %}
+        <legend><b>New Post</b></legend>
+        {{ form|crispy }}
+        <input type="submit" value="Post" class="btn btn-primary">
+    </form>
+</div>
+{% endif %}
+{% for post in page_obj %}
+<div class="border-post m-2 p-2">
+    <p class="post-username"><img class="profile-pic" src="{{ post.user.image.url }}"> <strong><a
+                href="{% url 'profile' post.user.id %}">{{ post.user.username }}</a></strong>
+        {% if user == post.user %}
+        <button class="btn btn-primary btn-sm edit-btn" data-postid="{{ post.id }}">Edit</button>
+        {% endif %}
+        <span class="float-right text-muted">{{ post.date }}</span>
+    </p>
+    <hr>
+    <div id="{{ post.id }}post-content" class="post-content">
+        <p>{{ post.content }}</p>
+    </div>
+    <p class="like">
+        {% if user.is_authenticated %}
+
+        {% if user in post.post_likes.all %}
+        <button data-postid="{{ post.id }}" data-status="liked"><img src="/media/like_red.png"
+                id="{{ post.id }}-img"></button>
+        {% else %}
+        <button data-postid="{{ post.id }}" data-status="unliked"><img src="/media/like.png"
+                id="{{ post.id }}-img"></button>
+        {% endif %}
+
+        {% else %}
+        <img src="/media/like.png" id="{{ post.id }}-img">
+
+        {% endif %}
+
+        <span id="{{ post.id }}-count">{{ post.likes.all|length }}</span>
+
+        {% if post.edited %}
+        <span class="text-muted" id="{{ post.id }}edit-status"><strong>&nbsp&nbsp&nbspEDITED</strong></span>
+        {% else %}
+        <span class="text-muted" id="{{ post.id }}edit-status"><strong></strong></span>
+        {% endif %}
+    </p>
+</div>
+{% endfor %}
+
+{% if is_paginated %}
+<div class="p-2 pager">
+    {% if page_obj.has_previous %}
+    <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+
+    <a class="btn btn-info mb-4" href="?page={{ page_obj.number }}">{{ page_obj.number }}</a>
+
+    {% if page_obj.has_next %}
+    <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.next_page_number }}">Next</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
